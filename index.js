@@ -25,8 +25,13 @@ function makeLogin(){
 
     emailForm.append(input, submit)
 
+    img = document.createElement('img')
+    img.src = "https://makemeacocktail.com/blog/wp-content/uploads/2019/02/a1.jpg"
+    img.alt = "Photo of Cocktails"
+    img.setAttribute("class", "welcome-img")
+
     container.innerText = ''
-    container.append(emailForm)
+    container.append(emailForm, img)
 }
 
 function helloUser(email) {
@@ -42,6 +47,7 @@ function helloUser(email) {
     .then(r => r.json())
     .then(user => {
         console.log(user)
+        localStorage.setItem("user_id", user.id)
         fetchDrinks()
     })
 }
@@ -54,12 +60,16 @@ function fetchDrinks() {
 
         createButton = document.createElement('button')
         createButton.innerText = 'Create Drink'
+        createButton.setAttribute("class", "create-button")
         createButton.addEventListener('click', () => {
             makeForm("new")
         })
+    
         container.append(createButton)
 
         drinkUl = document.createElement('ul')
+        drinkUl.setAttribute("class", "drink-list")
+
         drinks.forEach(drink => makeDrinkIndex(drink, drinkUl))
     })
 }
@@ -71,7 +81,7 @@ function makeDrinkIndex(drink, ul) {
     drinkName.innerText = drink.name
 
     image = document.createElement('img')
-    image.setAttribute("class", "image")
+    image.setAttribute("class", "index-img")
     image.src = drink.image
     image.alt = `Photo of ${drinkName}`
 
@@ -89,6 +99,7 @@ function showDrinkCard(drink) {
     image = document.createElement('img')
     image.src = drink.image
     image.alt = `Photo of ${drink.name}`
+    image.setAttribute("class", "card-img")
 
     ingredients = document.createElement('p')
     ingredients.innerText = drink.ingredients
@@ -116,8 +127,20 @@ function showDrinkCard(drink) {
 
     likeButton = document.createElement('button')
     likeButton.innerText = `${drink.likes.length} ❤`
+    likeButton.setAttribute("class", "like-button")
+
+    likes = drink.likes.filter(like => like.user_id == localStorage.user_id)
+
+    if (likes.length !== 0) {
+        likeButton.style = "color: red;"
+    }
     likeButton.addEventListener('click', () => {
+        if (likeButton.style.color === "red"){
+            removeLike(drink)
+        }else {
         addLike(drink, likeButton)
+        likeButton.style = "color: red;"
+        }
     })
 
     container.innerText = ''
@@ -125,16 +148,26 @@ function showDrinkCard(drink) {
 
 }
 
-function deleteDrink(drink){
+// fix VVVVV
+function removeLike(drink) {
+    fetch(URLmain + `/drinks/${drink.id}/likes/${localStorage.user_id}`, {
+        method: "DELETE"
+    })
+    .then(r => r.json())
+    .then(obj => {
+        console.log(obj)
+
+    })
+}
+
+function deleteDrink(drink) {
     fetch(URLmain + `/drinks/${drink.id}`, {
         method: "DELETE"
     })
     .then(r => r.json())
     .then(obj => {
         console.log(obj)
-        container.innerText = ''
         fetchDrinks()
-        // needs to delete likes too- server error
     })
 }
 
@@ -176,7 +209,7 @@ function makeForm(action, drink={name: "", ingredients: "", steps: "", image: ""
         if (action == "update"){
             makeUpdate(drink, form)
         }else {
-            createNew(drink, form)
+            createNew(form)
         }
     })
 
@@ -217,20 +250,26 @@ function addLike(drink, likeButton) {
             'content-type': 'application/json'
         },
         body: JSON.stringify({
-            user_id: 1,
-            // need to use current user ID
+            user_id: localStorage.user_id,
             drink_id: drink.id
         })
     })
     .then(r => r.json())
     .then(obj => {
         console.log(obj)
-        likeButton.innerText = `${drink.likes.length + 1} ❤`
-        // doesnt increment after 1 click
+        updateLikes(likeButton, drink)
     })
 }
 
-function createNew(drink, form) {
+function updateLikes(likeButton, drink) {
+    fetch(URLmain + `/drinks/${drink.id}`)
+    .then(r => r.json())
+    .then(obj => {
+        likeButton.innerText = `${obj.likes.length} ❤`
+    })
+}
+
+function createNew(form) {
     let name = form.name.value
     let image = form.image.value
     let ingredients = form.ingredients.value

@@ -13,7 +13,33 @@
     background-color: bisque;
 }
 
-.image {
-    height: 10rem;
-    width: auto;
+.welcome-img {
+    max-width: 600pt;
+}
+
+.index-img {
+    max-width: 70pt;
+}
+
+.card-img {
+    max-width: 110pt;
+}
+
+.create-button:hover {
+    background-color: rgb(131, 131, 231);
+}
+
+.drink-list {
+    list-style-type: none;
+}
+
+li {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8pt;
+}
+
+.like-button:hover {
+    color:  red;
 }
